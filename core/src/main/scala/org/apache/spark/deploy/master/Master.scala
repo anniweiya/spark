@@ -244,6 +244,7 @@ private[deploy] class Master(
         val worker = new WorkerInfo(id, workerHost, workerPort, cores, memory,
           workerRef, workerWebUiUrl)
         if (registerWorker(worker)) {
+          // add worker
           persistenceEngine.addWorker(worker)
           workerRef.send(RegisteredWorker(self, masterWebUiUrl, masterAddress))
           schedule()
@@ -422,11 +423,15 @@ private[deploy] class Master(
         persistenceEngine.addDriver(driver)
         waitingDrivers += driver
         drivers.add(driver)
+
+        // the main method
         schedule()
 
         // TODO: It might be good to instead have the submission client poll the master to determine
         //       the current status of the driver. For now it's simply "fire and forget".
 
+
+        // to shell ui already submit driver response
         context.reply(SubmitDriverResponse(self, true, Some(driver.id),
           s"Driver successfully submitted as ${driver.id}"))
       }
@@ -671,6 +676,8 @@ private[deploy] class Master(
       // If the cores left is less than the coresPerExecutor,the cores left will not be allocated
       if (app.coresLeft >= coresPerExecutor) {
         // Filter out workers that don't have enough resources to launch an executor
+
+        // just on workers
         val usableWorkers = workers.toArray.filter(_.state == WorkerState.ALIVE)
           .filter(worker => worker.memoryFree >= app.desc.memoryPerExecutorMB &&
             worker.coresFree >= coresPerExecutor)
@@ -732,6 +739,7 @@ private[deploy] class Master(
         val worker = shuffledAliveWorkers(curPos)
         numWorkersVisited += 1
         if (worker.memoryFree >= driver.desc.mem && worker.coresFree >= driver.desc.cores) {
+          // launch driver
           launchDriver(worker, driver)
           waitingDrivers -= driver
           launched = true
@@ -739,6 +747,7 @@ private[deploy] class Master(
         curPos = (curPos + 1) % numWorkersAlive
       }
     }
+    // start executor
     startExecutorsOnWorkers()
   }
 
@@ -1009,6 +1018,8 @@ private[deploy] class Master(
     logInfo("Launching driver " + driver.id + " on worker " + worker.id)
     worker.addDriver(driver)
     driver.worker = Some(worker)
+
+    // go to worker launchdriver
     worker.endpoint.send(LaunchDriver(driver.id, driver.desc))
     driver.state = DriverState.RUNNING
   }
@@ -1047,6 +1058,7 @@ private[deploy] object Master extends Logging {
     Utils.initDaemon(log)
     val conf = new SparkConf
     val args = new MasterArguments(argStrings, conf)
+    // start rpc env
     val (rpcEnv, _, _) = startRpcEnvAndEndpoint(args.host, args.port, args.webUiPort, conf)
     rpcEnv.awaitTermination()
   }
@@ -1064,6 +1076,8 @@ private[deploy] object Master extends Logging {
       conf: SparkConf): (RpcEnv, Int, Option[Int]) = {
     val securityMgr = new SecurityManager(conf)
     val rpcEnv = RpcEnv.create(SYSTEM_NAME, host, port, conf, securityMgr)
+
+    // setup end point
     val masterEndpoint = rpcEnv.setupEndpoint(ENDPOINT_NAME,
       new Master(rpcEnv, rpcEnv.address, webUiPort, securityMgr, conf))
     val portsResponse = masterEndpoint.askSync[BoundPortsResponse](BoundPortsRequest)

@@ -89,6 +89,7 @@ private[deploy] class DriverRunner(
           }
 
           // prepare driver jars and run driver
+          // prepare driver jars and run driver
           val exitCode = prepareAndRunDriver()
 
           // set final state depending on if forcibly killed and process exit code
@@ -182,6 +183,8 @@ private[deploy] class DriverRunner(
     val builder = CommandUtils.buildProcessBuilder(driverDesc.command, securityManager,
       driverDesc.mem, sparkHome.getAbsolutePath, substituteVariables)
 
+
+    // run driver
     runDriver(builder, driverDir, driverDesc.supervise)
   }
 
@@ -215,6 +218,8 @@ private[deploy] class DriverRunner(
 
       synchronized {
         if (killed) { return exitCode }
+
+        // command start
         process = Some(command.start())
         initialize(process.get)
       }

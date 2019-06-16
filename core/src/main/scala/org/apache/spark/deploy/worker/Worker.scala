@@ -563,6 +563,7 @@ private[deploy] class Worker(
       }
 
     case LaunchDriver(driverId, driverDesc) =>
+      // launchdriver
       logInfo(s"Asked to launch driver $driverId")
       val driver = new DriverRunner(
         conf,
@@ -574,6 +575,8 @@ private[deploy] class Worker(
         workerUri,
         securityMgr)
       drivers(driverId) = driver
+
+      // start
       driver.start()
 
       coresUsed += driverDesc.cores
@@ -752,6 +755,7 @@ private[deploy] object Worker extends Logging {
     Utils.initDaemon(log)
     val conf = new SparkConf
     val args = new WorkerArguments(argStrings, conf)
+    // start rpc env and end point
     val rpcEnv = startRpcEnvAndEndpoint(args.host, args.port, args.webUiPort, args.cores,
       args.memory, args.masters, args.workDir, conf = conf)
     // With external shuffle service enabled, if we request to launch multiple workers on one host,
@@ -782,8 +786,12 @@ private[deploy] object Worker extends Logging {
     // The LocalSparkCluster runs multiple local sparkWorkerX RPC Environments
     val systemName = SYSTEM_NAME + workerNumber.map(_.toString).getOrElse("")
     val securityMgr = new SecurityManager(conf)
+
+    // create rpc env
     val rpcEnv = RpcEnv.create(systemName, host, port, conf, securityMgr)
     val masterAddresses = masterUrls.map(RpcAddress.fromSparkURL(_))
+
+    // setup end point
     rpcEnv.setupEndpoint(ENDPOINT_NAME, new Worker(rpcEnv, webUiPort, cores, memory,
       masterAddresses, ENDPOINT_NAME, workDir, conf, securityMgr))
     rpcEnv

@@ -46,6 +46,8 @@ object DriverWrapper extends Logging {
         val port: Int = sys.props.getOrElse("spark.driver.port", "0").toInt
         val rpcEnv = RpcEnv.create("Driver", host, port, conf, new SecurityManager(conf))
         logInfo(s"Driver address: ${rpcEnv.address}")
+
+        // end point worker watcher
         rpcEnv.setupEndpoint("workerWatcher", new WorkerWatcher(rpcEnv, workerUrl))
 
         val currentLoader = Thread.currentThread.getContextClassLoader

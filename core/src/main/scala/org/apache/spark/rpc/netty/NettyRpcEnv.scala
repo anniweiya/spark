@@ -52,6 +52,7 @@ private[netty] class NettyRpcEnv(
     "rpc",
     conf.getInt("spark.rpc.io.threads", 0))
 
+  // new dispatcher
   private val dispatcher: Dispatcher = new Dispatcher(this, numUsableCores)
 
   private val streamManager = new NettyStreamManager(this)

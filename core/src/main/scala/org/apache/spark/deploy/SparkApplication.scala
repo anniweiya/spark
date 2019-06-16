@@ -49,6 +49,7 @@ private[deploy] class JavaMainApplication(klass: Class[_]) extends SparkApplicat
       sys.props(k) = v
     }
 
+    // invoke
     mainMethod.invoke(null, args)
   }
 

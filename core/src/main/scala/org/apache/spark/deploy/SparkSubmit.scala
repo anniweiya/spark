@@ -133,6 +133,7 @@ object SparkSubmit extends CommandLineUtils with Logging {
       // scalastyle:on println
     }
     appArgs.action match {
+        // submit method
       case SparkSubmitAction.SUBMIT => submit(appArgs, uninitLog)
       case SparkSubmitAction.KILL => kill(appArgs)
       case SparkSubmitAction.REQUEST_STATUS => requestStatus(appArgs)
@@ -167,15 +168,20 @@ object SparkSubmit extends CommandLineUtils with Logging {
    */
   @tailrec
   private def submit(args: SparkSubmitArguments, uninitLog: Boolean): Unit = {
+
+    // childMainClass = ClientApp(standalone) YarnClusterApplication(yarn)
+    // RestSubmissionClientApp(rest)
     val (childArgs, childClasspath, sparkConf, childMainClass) = prepareSubmitEnvironment(args)
 
     def doRunMain(): Unit = {
+      // runmain
       if (args.proxyUser != null) {
         val proxyUser = UserGroupInformation.createProxyUser(args.proxyUser,
           UserGroupInformation.getCurrentUser())
         try {
           proxyUser.doAs(new PrivilegedExceptionAction[Unit]() {
             override def run(): Unit = {
+              // run main ClientApp
               runMain(childArgs, childClasspath, sparkConf, childMainClass, args.verbose)
             }
           })
@@ -876,6 +882,7 @@ object SparkSubmit extends CommandLineUtils with Logging {
     }
 
     try {
+      // RestSubmissionClientApp.start
       app.start(childArgs.toArray, sparkConf)
     } catch {
       case t: Throwable =>

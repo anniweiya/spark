@@ -61,6 +61,8 @@ private class ClientEndpoint(
    private var activeMasterEndpoint: RpcEndpointRef = null
 
   override def onStart(): Unit = {
+
+    // clinet onstart
     driverArgs.cmd match {
       case "launch" =>
         // TODO: We could add an env variable here and intercept it in `sc.addJar` that would
@@ -83,6 +85,8 @@ private class ClientEndpoint(
           .map(Utils.splitCommandString).getOrElse(Seq.empty)
         val sparkJavaOpts = Utils.sparkJavaOpts(conf)
         val javaOpts = sparkJavaOpts ++ extraJavaOpts
+
+        // command run DriverWrapper
         val command = new Command(mainClass,
           Seq("{{WORKER_URL}}", "{{USER_JAR}}", driverArgs.mainClass) ++ driverArgs.driverOptions,
           sys.env, classPathEntries, libraryPathEntries, javaOpts)
@@ -93,6 +97,9 @@ private class ClientEndpoint(
           driverArgs.cores,
           driverArgs.supervise,
           command)
+
+        // send message to master
+        // org.apache.spark.deploy.master.Master.receiveAndReply case RequestSubmitDriver
         asyncSendToMasterAndForwardReply[SubmitDriverResponse](
           RequestSubmitDriver(driverDescription))
 
@@ -120,6 +127,7 @@ private class ClientEndpoint(
     // Since ClientEndpoint is the only RpcEndpoint in the process, blocking the event loop thread
     // is fine.
     logInfo("... waiting before polling master for driver state")
+    // this sleep is fine in clinet
     Thread.sleep(5000)
     logInfo("... polling master for driver state")
     val statusResponse =
@@ -236,6 +244,10 @@ private[spark] class ClientApp extends SparkApplication {
 
     val masterEndpoints = driverArgs.masters.map(RpcAddress.fromSparkURL).
       map(rpcEnv.setupEndpointRef(_, Master.ENDPOINT_NAME))
+
+    // setup end point
+    // rpcenv setup endpoint to new dispatcher and new inbox
+    // org.apache.spark.deploy.ClientEndpoint.onStart
     rpcEnv.setupEndpoint("client", new ClientEndpoint(rpcEnv, driverArgs, masterEndpoints, conf))
 
     rpcEnv.awaitTermination()

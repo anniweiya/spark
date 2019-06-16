@@ -359,6 +359,10 @@ class SparkContext(config: SparkConf) extends Logging {
     Utils.setLogLevel(org.apache.log4j.Level.toLevel(upperCased))
   }
 
+
+
+
+  // start main
   try {
     _conf = config.clone()
     _conf.validateSettings()
