@@ -529,6 +529,8 @@ private[deploy] class Worker(
             conf,
             appLocalDirs, ExecutorState.RUNNING)
           executors(appId + "/" + execId) = manager
+
+          // manager start
           manager.start()
           coresUsed += cores_
           memoryUsed += memory_

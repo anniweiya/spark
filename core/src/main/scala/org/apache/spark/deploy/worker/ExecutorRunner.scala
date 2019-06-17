@@ -70,7 +70,10 @@ private[deploy] class ExecutorRunner(
 
   private[worker] def start() {
     workerThread = new Thread("ExecutorRunner for " + fullId) {
-      override def run() { fetchAndRunExecutor() }
+      override def run() {
+        // run executor
+        fetchAndRunExecutor()
+      }
     }
     workerThread.start()
     // Shutdown hook that kills actors on shutdown.
@@ -142,6 +145,9 @@ private[deploy] class ExecutorRunner(
   private def fetchAndRunExecutor() {
     try {
       // Launch the process
+
+      // appDesc.command = CoarseGrainedExecutorBackend.main()
+      // org.apache.spark.scheduler.cluster.StandaloneSchedulerBackend.start#102L
       val builder = CommandUtils.buildProcessBuilder(appDesc.command, new SecurityManager(conf),
         memory, sparkHome.getAbsolutePath, substituteVariables)
       val command = builder.command()
